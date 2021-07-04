@@ -106,8 +106,10 @@ def login():
 def logout():
     """Handle logout of user."""
 
-    # IMPLEMENT THIS
+    do_logout()
+    flash("User logged out.", 'success')
 
+    return redirect("/login")
 
 ##############################################################################
 # General user routes:
@@ -284,6 +286,8 @@ def homepage():
     - logged in: 100 most recent messages of followed_users
     """
 
+    # import pdb; pdb.set_trace()
+
     if g.user:
         messages = (Message
                     .query
@@ -292,6 +296,8 @@ def homepage():
                     .all())
 
         return render_template('home.html', messages=messages)
+        # {{'btn-primary' if msg.id in likes else 'btn-secondary'}}
+        # href="/users/{{ g.user.id }}"
 
     else:
         return render_template('home-anon.html')

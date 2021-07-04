@@ -5,7 +5,7 @@ DB_CONFIG = {
     'driver': settings['PGDRIVER'],
     'user': settings['PGUSER'],
     'pw': settings['PGPASSWORD'],
-    'db': 'warbler',
+    'db': 'warb1',
     'host': settings['PGHOST'],
     'port': settings['PGPORT'],
 }
@@ -17,4 +17,11 @@ def config_app(app):
     app.config['SQLALCHEMY_ECHO'] = False
     app.config['SECRET_KEY'] = 'testtest'
     app.config['TESTING'] = True
-    app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = True
+    app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
+
+from os import getpid
+pid = str(getpid())
+print(f'Creating PID file: {pid} => /tmp/flaskapp.pid')
+fh=open("/tmp/flaskapp.pid", "w")
+fh.write(pid)
+fh.close()
