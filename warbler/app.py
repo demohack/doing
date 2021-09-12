@@ -1,11 +1,14 @@
 import os
 
-from flask import Flask, render_template, request, flash, redirect, session, g
+from flask import Flask, render_template, request, flash, redirect, session, g, abort
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
-from forms import UserAddForm, LoginForm, MessageForm
+from forms import UserAddForm, LoginForm, MessageForm, UserEditForm
 from models import db, connect_db, User, Message
+
+from config import get_config_ipdb_break
+import ipdb
 
 CURR_USER_KEY = "curr_user"
 
@@ -15,7 +18,7 @@ from config import config_app
 config_app(app)
 connect_db(app)
 
-toolbar = DebugToolbarExtension(app)
+# toolbar = DebugToolbarExtension(app)
 
 
 ##############################################################################
@@ -49,7 +52,6 @@ def do_logout():
 @app.route('/signup', methods=["GET", "POST"])
 def signup():
     """Handle user signup.
-
     Create new user and add to DB. Redirect to home page.
 
     If form not valid, present form.
@@ -57,6 +59,7 @@ def signup():
     If the there already is a user with that username: flash message
     and re-present form.
     """
+    # if get_config_ipdb_break(): ipdb.set_trace()
 
     form = UserAddForm()
 
@@ -88,6 +91,7 @@ def login():
 
     form = LoginForm()
 
+    # if get_config_ipdb_break(): ipdb.set_trace()
     if form.validate_on_submit():
         user = User.authenticate(form.username.data,
                                  form.password.data)
@@ -105,6 +109,7 @@ def login():
 @app.route('/logout')
 def logout():
     """Handle logout of user."""
+    # if get_config_ipdb_break(): ipdb.set_trace()
 
     do_logout()
     flash("User logged out.", 'success')
@@ -120,6 +125,7 @@ def list_users():
 
     Can take a 'q' param in querystring to search by that username.
     """
+    # if get_config_ipdb_break(): ipdb.set_trace()
 
     search = request.args.get('q')
 
@@ -134,6 +140,7 @@ def list_users():
 @app.route('/users/<int:user_id>')
 def users_show(user_id):
     """Show user profile."""
+    # if get_config_ipdb_break(): ipdb.set_trace()
 
     user = User.query.get_or_404(user_id)
 
@@ -145,12 +152,16 @@ def users_show(user_id):
                 .order_by(Message.timestamp.desc())
                 .limit(100)
                 .all())
-    return render_template('users/show.html', user=user, messages=messages)
+
+    likes = [like.id for like in user.likes]
+
+    return render_template('users/show.html', user=user, messages=messages, likes=likes)
 
 
 @app.route('/users/<int:user_id>/following')
 def show_following(user_id):
     """Show list of people this user is following."""
+    # if get_config_ipdb_break(): ipdb.set_trace()
 
     if not g.user:
         flash("Access unauthorized.", "danger")
@@ -163,6 +174,7 @@ def show_following(user_id):
 @app.route('/users/<int:user_id>/followers')
 def users_followers(user_id):
     """Show list of followers of this user."""
+    # if get_config_ipdb_break(): ipdb.set_trace()
 
     if not g.user:
         flash("Access unauthorized.", "danger")
@@ -172,9 +184,23 @@ def users_followers(user_id):
     return render_template('users/followers.html', user=user)
 
 
+@app.route('/users/<int:user_id>/likes')
+def show_likes(user_id):
+    """Show user likes."""
+    # if get_config_ipdb_break(): ipdb.set_trace()
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    user = User.query.get_or_404(user_id)
+    return render_template('users/likes.html', user=user)
+
+
 @app.route('/users/follow/<int:follow_id>', methods=['POST'])
 def add_follow(follow_id):
     """Add a follow for the currently-logged-in user."""
+    # if get_config_ipdb_break(): ipdb.set_trace()
 
     if not g.user:
         flash("Access unauthorized.", "danger")
@@ -190,6 +216,7 @@ def add_follow(follow_id):
 @app.route('/users/stop-following/<int:follow_id>', methods=['POST'])
 def stop_following(follow_id):
     """Have currently-logged-in-user stop following this user."""
+    # if get_config_ipdb_break(): ipdb.set_trace()
 
     if not g.user:
         flash("Access unauthorized.", "danger")
@@ -205,13 +232,36 @@ def stop_following(follow_id):
 @app.route('/users/profile', methods=["GET", "POST"])
 def profile():
     """Update profile for current user."""
+    # if get_config_ipdb_break(): ipdb.set_trace()
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    user = g.user
+    form = UserEditForm(obj=user)
 
     # IMPLEMENT THIS
+    if form.validate_on_submit():
+        if User.authenticate(user.username, form.password.data):
+            user.username = form.username.data
+            user.email = form.email.data
+            user.image_url = form.image_url.data
+            user.bio = form.bio.data
+            user.header_image_url = form.header_image_url.data
+
+            db.session.commit()
+            return redirect(f"/users/{user.id}")
+
+        flash("Wrong password.", 'danger')
+
+    return render_template('users/edit.html', form=form, user_id=user.id)
 
 
 @app.route('/users/delete', methods=["POST"])
 def delete_user():
     """Delete user."""
+    # if get_config_ipdb_break(): ipdb.set_trace()
 
     if not g.user:
         flash("Access unauthorized.", "danger")
@@ -225,6 +275,8 @@ def delete_user():
     return redirect("/signup")
 
 
+
+
 ##############################################################################
 # Messages routes:
 
@@ -234,6 +286,7 @@ def messages_add():
 
     Show form if GET. If valid, update message and redirect to user page.
     """
+    # if get_config_ipdb_break(): ipdb.set_trace()
 
     if not g.user:
         flash("Access unauthorized.", "danger")
@@ -254,6 +307,7 @@ def messages_add():
 @app.route('/messages/<int:message_id>', methods=["GET"])
 def messages_show(message_id):
     """Show a message."""
+    # if get_config_ipdb_break(): ipdb.set_trace()
 
     msg = Message.query.get(message_id)
     return render_template('messages/show.html', message=msg)
@@ -262,6 +316,7 @@ def messages_show(message_id):
 @app.route('/messages/<int:message_id>/delete', methods=["POST"])
 def messages_destroy(message_id):
     """Delete a message."""
+    # if get_config_ipdb_break(): ipdb.set_trace()
 
     if not g.user:
         flash("Access unauthorized.", "danger")
@@ -272,6 +327,31 @@ def messages_destroy(message_id):
     db.session.commit()
 
     return redirect(f"/users/{g.user.id}")
+
+
+@app.route('/messages/<int:message_id>/like', methods=['POST'])
+def messages_like(message_id):
+    """Like a message."""
+    # if get_config_ipdb_break(): ipdb.set_trace()
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    message = Message.query.get_or_404(message_id)
+    if message.user_id == g.user.id:
+        return abort(403)
+
+    likes = g.user.likes
+
+    if message not in likes:
+        g.user.likes.append(message)
+    else:
+        g.user.likes = [like for like in likes if like != message]
+
+    db.session.commit()
+
+    return redirect("/")
 
 
 ##############################################################################
@@ -285,19 +365,24 @@ def homepage():
     - anon users: no messages
     - logged in: 100 most recent messages of followed_users
     """
-
-    # import pdb; pdb.set_trace()
+    # if get_config_ipdb_break(): ipdb.set_trace()
 
     if g.user:
+        following_ids = [following.id for following in g.user.following] + [g.user.id]
+
         messages = (Message
                     .query
+                    .filter(Message.user_id.in_(following_ids))
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
 
-        return render_template('home.html', messages=messages)
-        # {{'btn-primary' if msg.id in likes else 'btn-secondary'}}
-        # href="/users/{{ g.user.id }}"
+        # likes = list()
+        # for message in user.likes:
+        #     likes.append(message.id)
+        likes = [message.id for message in g.user.likes]
+
+        return render_template('home.html', messages=messages, likes=likes)
 
     else:
         return render_template('home-anon.html')

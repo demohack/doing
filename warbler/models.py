@@ -8,6 +8,9 @@ from flask_sqlalchemy import SQLAlchemy
 bcrypt = Bcrypt()
 db = SQLAlchemy()
 
+from config import get_config_ipdb_break
+import ipdb
+
 
 def connect_db(app):
     """Connect this database to provided Flask app.
@@ -110,14 +113,16 @@ class User(db.Model):
         "User",
         secondary="follows",
         primaryjoin=(Follows.user_being_followed_id == id),
-        secondaryjoin=(Follows.user_following_id == id)
+        secondaryjoin=(Follows.user_following_id == id),
+        overlaps="followers"
     )
 
     following = db.relationship(
         "User",
         secondary="follows",
         primaryjoin=(Follows.user_following_id == id),
-        secondaryjoin=(Follows.user_being_followed_id == id)
+        secondaryjoin=(Follows.user_being_followed_id == id),
+        overlaps="followers"
     )
 
     likes = db.relationship(
@@ -170,6 +175,8 @@ class User(db.Model):
         If can't find matching user (or if password is wrong), returns False.
         """
 
+        # if get_config_ipdb_break(): ipdb.set_trace()
+
         user = cls.query.filter_by(username=username).first()
 
         if user:
@@ -204,9 +211,11 @@ class Message(db.Model):
     user_id = db.Column(
         db.Integer,
         db.ForeignKey('users.id', ondelete='CASCADE'),
-        nullable=False,
+        nullable=False
     )
 
-    user = db.relationship('User')
+    user = db.relationship('User',
+        overlaps="messages"
+    )
 
 
