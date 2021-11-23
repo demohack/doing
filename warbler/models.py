@@ -31,13 +31,13 @@ class Follows(db.Model):
         db.Integer,
         db.ForeignKey('users.id', ondelete="cascade"),
         primary_key=True,
-    )
+    )       #user that is followed
 
     user_following_id = db.Column(
         db.Integer,
         db.ForeignKey('users.id', ondelete="cascade"),
         primary_key=True,
-    )
+    )       #user that does the following
 
 
 class Likes(db.Model):
@@ -112,8 +112,8 @@ class User(db.Model):
     followers = db.relationship(
         "User",
         secondary="follows",
-        primaryjoin=(Follows.user_being_followed_id == id),
-        secondaryjoin=(Follows.user_following_id == id),
+        primaryjoin=(Follows.user_being_followed_id == id),     #user that is followed
+        secondaryjoin=(Follows.user_following_id == id),        #user that does the following
         overlaps="followers"
     )
 
