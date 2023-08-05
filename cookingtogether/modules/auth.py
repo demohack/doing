@@ -10,5 +10,6 @@ bp = Blueprint('auth', __name__)
 @bp.route("/login")
 def show_login():
     """Return a list of auth."""
+#    import ipdb; ipdb.set_trace()
 
     return render_template("auth/login.html")

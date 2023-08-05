@@ -1,6 +1,17 @@
 <!doctype html>
 <title>{% block title %}{% endblock %} - Flaskr</title>
+
+<link rel="stylesheet" href="https://unpkg.com/bootstrap/dist/css/bootstrap.css">
+<script src="https://unpkg.com/jquery"></script>
+<script src="https://unpkg.com/popper"></script>
+<script src="https://unpkg.com/bootstrap"></script>
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css">
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+
+
 <section class="content">
   <header>
     {% block header %}{% endblock %}
